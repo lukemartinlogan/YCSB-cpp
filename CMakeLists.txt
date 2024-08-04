@@ -5,6 +5,9 @@ cmake_minimum_required(VERSION 3.10)
 project(ycsb-cpp LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 
+# This is for compatability with SPACK
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 set(CMAKE_BUILD_TYPE Release)
 set(CompilerFlags
         CMAKE_CXX_FLAGS
@@ -21,9 +24,10 @@ if(MSVC)
     endforeach()
 endif()
 
-option(BIND_ROCKSDB "build with rocksdb" OFF)
+option(BIND_ROCKSDB "build with rocksdb" ON)
 option(BIND_LMDB "build with lmdb" OFF)
-option(BIND_LEVELDB "build with leveldb" OFF)
+option(BIND_LEVELDB "build with leveldb" ON)
+option(BIND_HERMES "build with hermes" ON)
 option(BIND_WIREDTIGER "build with wiredtiger" OFF)
 
 option(WITH_ZLIB "linking YCSB with zlib; needed by HdrHISTOGRAM, DO NOT TURN OFF" ON)
@@ -116,6 +120,19 @@ else()
     message(STATUS "BIND_WIREDTIGER - OFF")
 endif()
 
+if (BIND_HERMES)
+    message(STATUS "BIND_LEVELDB - ON")
+    file(GLOB_RECURSE YCSB_HERMES_CC "hermes_db/*.cc")
+    target_sources(ycsb PRIVATE ${YCSB_HERMES_CC})
+
+    find_package(Hermes CONFIG REQUIRED)
+    target_link_libraries(ycsb PRIVATE ${Hermes_CLIENT_LIBRARIES})
+    target_include_directories(ycsb PRIVATE ${Hermes_INCLUDE_DIRS})
+    target_link_directories(ycsb PRIVATE ${Hermes_CLIENT_LIBRARY_DIRS})
+else()
+    message(STATUS "BIND_HERMES - OFF")
+endif ()
+
 if(WITH_ZLIB)
     message(STATUS "WITH_ZLIB - ON")
     find_package(ZLIB)
@@ -199,3 +216,5 @@ include_directories(HdrHistogram_c/include)
 add_compile_definitions(HDRMEASUREMENT)
 add_dependencies(ycsb hdr_histogram_static)
 target_link_libraries(ycsb PRIVATE hdr_histogram_static)
+
+install(TARGETS ycsb DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
