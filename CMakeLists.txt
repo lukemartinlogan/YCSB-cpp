@@ -32,7 +32,7 @@ option(BIND_WIREDTIGER "build with wiredtiger" OFF)
 
 option(WITH_ZLIB "linking YCSB with zlib; needed by HdrHISTOGRAM, DO NOT TURN OFF" ON)
 option(WITH_LZ4 "linking YCSB with lz4" OFF)
-option(WITH_SNAPPY "linking YCSB with snappy" OFF)
+option(WITH_SNAPPY "linking YCSB with snappy" ON)
 option(WITH_ZSTD "linking YCSB with zstd" OFF)
 option(WITH_BZ2 "linking YCSB with bzip2" OFF)
 
