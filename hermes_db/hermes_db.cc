@@ -20,15 +20,42 @@ typedef DB::Status Status;
 
 void HermesDB::Init() {
   TRANSPARENT_HERMES();
+  bucket = HERMES->GetBucket("ycsb");
 }
 
 void HermesDB::Cleanup() {
   HERMES->Clear();
 }
 
+size_t GetSrlSize(std::vector<HermesDB::Field> &values) {
+  size_t srl_size = 0;
+  for (HermesDB::Field &field : values) {
+    srl_size += field.name.size() + field.value.size();
+  }
+  return srl_size;
+}
+
+//void SerializeBlob(hipc::LPointer<char> &blob,
+//                   size_t blob_size,
+//                   std::vector<HermesDB::Field> &values) {
+//  size_t off = 0;
+//  hipc::LPointer<char> blob = HRUN_CLIENT->AllocateBufferClient(srl_size);
+//  for (HermesDB::Field &field : values) {
+//    memcpy(blob.ptr_ + off, field.name.c_str(), field.name.size());
+//    off += field.name.size();
+//    memcpy(blob.ptr_ + off, field.value.c_str(), field.value.size());
+//    off += field.value.size();
+//  }
+//}
+//
+//void DeserializeBlob(hipc::LPointer<char> &blob,
+//                     size_t blob_size,
+//                     std::vector<HermesDB::Field> &values) {
+//
+//}
+
 Status HermesDB::Read(const std::string &table, const std::string &key,
                       const std::vector<std::string> *fields, std::vector<Field> &result) {
-  hermes::Bucket bucket = HERMES->GetBucket(table);
   hermes::Context ctx;
 //  if (bucket.GetBlobId(key).IsNull()) {
 //    return Status::kNotFound;
@@ -39,37 +66,11 @@ Status HermesDB::Read(const std::string &table, const std::string &key,
 
 Status HermesDB::Scan(const std::string &table, const std::string &key, int len,
                       const std::vector<std::string> *fields, std::vector<std::vector<Field>> &result) {
-  // Create a set
-  std::unordered_set<std::string> field_set;
-  if (fields != nullptr) {
-    for (const auto &field : *fields) {
-      field_set.insert(field);
-    }
-  }
-  // Read entire blob
-  hermes::Bucket bucket = HERMES->GetBucket(table);
-  hermes::Context ctx;
-  bucket.Get(key, result, ctx);
-  // Read field from keys
-  for (int i = 0; i < len; ++i) {
-    result.emplace_back();
-    bucket.Get(key + std::to_string(i), result, ctx);
-    if (fields != nullptr) {
-      for (auto it = result.back().begin(); it != result.back().end();) {
-        if (field_set.find(it->name) == field_set.end()) {
-          it = result.back().erase(it);
-        } else {
-          ++it;
-        }
-      }
-    }
-  }
-  return Status::kOK;
+  return Status::kNotImplemented;
 }
 
 Status HermesDB::Update(const std::string &table, const std::string &key, std::vector<Field> &values) {
   // Get whole blob
-  hermes::Bucket bucket = HERMES->GetBucket(table);
   hermes::Context ctx;
   std::vector<Field> result;
   bucket.Get(key, result, ctx);
@@ -82,20 +83,18 @@ Status HermesDB::Update(const std::string &table, const std::string &key, std::v
       }
     }
   }
-  // Put back
-  bucket.Put(key, result, ctx);
+  // Put
+  bucket.AsyncPut(key, values, ctx);
   return Status::kOK;
 }
 
 Status HermesDB::Insert(const std::string &table, const std::string &key, std::vector<Field> &values) {
-  hermes::Bucket bucket = HERMES->GetBucket(table);
   hermes::Context ctx;
-  bucket.Put(key, values, ctx);
+  bucket.AsyncPut(key, values, ctx);
   return Status::kOK;
 }
 
 Status HermesDB::Delete(const std::string &table, const std::string &key) {
-  hermes::Bucket bucket = HERMES->GetBucket(table);
   hermes::Context ctx;
   hermes::BlobId blob_id = bucket.GetBlobId(key);
   bucket.DestroyBlob(blob_id, ctx);

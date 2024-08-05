@@ -39,6 +39,14 @@ Status RedisDB::Read(const std::string &table, const std::string &key,
 
   std::string fullKey = table + ":" + key;
 
+  // Fetch all fields if no specific fields are provided
+  redisReply* reply = (redisReply*)redisCommand(
+      context_, "HGETALL %b", fullKey.c_str(), (size_t)fullKey.length());
+  if (!reply || context_->err) {
+    if (reply) freeReplyObject(reply);
+    return Status::kError;
+  }
+
   if (fields == nullptr) {
     // Fetch all fields if no specific fields are provided
     redisReply* reply = (redisReply*)redisCommand(
@@ -100,71 +108,7 @@ Status RedisDB::Read(const std::string &table, const std::string &key,
 
 Status RedisDB::Scan(const std::string &table, const std::string &key, int len,
             const std::vector<std::string> *fields, std::vector<std::vector<Field>> &result) {
-  uint64_t key_id = std::stoull(key);
-  for (int i = 0; i < len; ++i) {
-    std::string fullKey = table + ":" + std::to_string(key_id + i);
-    if (fields == nullptr) {
-      // Fetch all fields if no specific fields are provided
-      redisReply *reply = (redisReply *) redisCommand(
-          context_, "HGETALL %b", fullKey.c_str(), (size_t) fullKey.length());
-      if (!reply || context_->err) {
-        if (reply) freeReplyObject(reply);
-        return Status::kError;
-      }
-
-      if (reply->type == REDIS_REPLY_NIL) {
-        freeReplyObject(reply);
-        return Status::kNotFound;
-      }
-
-      std::vector<Field> record;
-      for (size_t i = 0; i < reply->elements; i += 2) {
-        Field field;
-        field.name = reply->element[i]->str;
-        field.value = reply->element[i + 1]->str;
-        record.push_back(field);
-      }
-      result.push_back(record);
-      freeReplyObject(reply);
-    } else {
-      // Fetch specific fields
-      std::vector<const char *> argv;
-      std::vector<size_t> argvlen;
-      argv.push_back("HMGET");
-      argvlen.push_back(5);
-      argv.push_back(fullKey.c_str());
-      argvlen.push_back(fullKey.length());
-
-      for (const std::string &field : *fields) {
-        argv.push_back(field.c_str());
-        argvlen.push_back(field.length());
-      }
-
-      redisReply *reply = (redisReply *) redisCommandArgv(
-          context_, argv.size(), argv.data(), argvlen.data());
-      if (!reply || context_->err) {
-        if (reply) freeReplyObject(reply);
-        return Status::kError;
-      }
-
-      if (reply->type == REDIS_REPLY_NIL) {
-        freeReplyObject(reply);
-        return Status::kNotFound;
-      }
-
-      std::vector<Field> record;
-      for (size_t i = 0; i < fields->size(); ++i) {
-        Field field;
-        field.name = (*fields)[i];
-        field.value = reply->element[i]->str ? reply->element[i]->str : "";
-        record.push_back(field);
-      }
-      result.push_back(record);
-      freeReplyObject(reply);
-    }
-  }
-  
-  return Status::kOK;
+  return Status::kNotImplemented;
 }
 
 Status RedisDB::Update(const std::string &table, const std::string &key, std::vector<Field> &values) {

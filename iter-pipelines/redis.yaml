@@ -1,0 +1,17 @@
+# Evaluation 1 / GS Mega
+config:
+  name: ycsb-redis
+  env: ycsbc
+  pkgs:
+    - pkg_type: redis
+      pkg_name: redis
+      sleep: 1
+    - pkg_type: ycsbc
+      pkg_name: ycsbc
+      db_name: redis
+vars:
+  ycsbc.workload: ["a", "b", "c", "d", "e", "f"]
+loop:
+  - [ycsbc.workload]
+repeat: 1
+output: "$SHARED_DIR/output"

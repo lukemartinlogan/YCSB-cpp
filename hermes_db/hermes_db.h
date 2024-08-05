@@ -20,6 +20,8 @@ namespace ycsbc {
 
 class HermesDB : public DB {
  public:
+  hermes::Bucket bucket;
+ public:
   HermesDB() {}
   ~HermesDB() {}
 

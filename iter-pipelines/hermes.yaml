@@ -1,0 +1,21 @@
+# Evaluation 1 / GS Mega
+config:
+  name: ycsb-hermes
+  env: ycsbc
+  pkgs:
+    - pkg_type: hermes_run
+      pkg_name: hermes_run
+      sleep: 1
+      pqdepth: 8
+      ram: 4g
+      provider: sockets
+      num_nodes: 1
+    - pkg_type: ycsbc
+      pkg_name: ycsbc
+      db_name: hermes
+vars:
+  ycsbc.workload: ["a", "b", "c", "d", "e", "f"]
+loop:
+  - [ycsbc.workload]
+repeat: 5
+output: "$SHARED_DIR/output"
