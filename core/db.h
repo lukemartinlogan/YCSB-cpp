@@ -25,6 +25,11 @@ class DB {
   struct Field {
     std::string name;
     std::string value;
+
+    template<typename Ar>
+    void serialize(Ar &ar) {
+      ar(name, value);
+    }
   };
   enum Status {
     kOK = 0,

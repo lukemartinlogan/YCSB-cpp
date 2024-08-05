@@ -13,6 +13,7 @@
 #include "core/db_factory.h"
 #include "utils/utils.h"
 
+
 namespace ycsbc {
 
 typedef DB::Status Status;
@@ -27,7 +28,12 @@ void HermesDB::Cleanup() {
 
 Status HermesDB::Read(const std::string &table, const std::string &key,
             const std::vector<std::string> *fields, std::vector<Field> &result) {
-
+  hermes::Bucket bucket = HERMES->GetBucket(table);
+  hermes::Context ctx;
+  if (bucket.GetBlobId(key).IsNull()) {
+    return Status::kNotFound;
+  }
+  bucket.Get(key, result, ctx);
   return Status::kOK;
 }
 
